@@ -49,6 +49,12 @@
         </div>
     </main>
 
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-stone-900 text-white px-5 py-3 rounded-xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMsg" class="text-sm font-medium">Товар добавлен в корзину</span>
+    </div>
+
     <!-- Cart Modal / Slide-over -->
     <div id="cartModal" class="fixed inset-0 bg-black/50 z-50 flex justify-end hidden opacity-0 transition-opacity duration-300">
         <div class="bg-white w-full max-w-md h-full flex flex-col shadow-2xl">
@@ -72,8 +78,8 @@
                     <input type="text" id="custAddress" placeholder="Адрес доставки или город" required class="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500">
                     <textarea id="custNote" placeholder="Размер или комментарий к заказу" rows="2" class="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
                     
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                        <i class="fa-brands fa-whatsapp text-xl"></i> Оформить через WhatsApp
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md">
+                        <i class="fa-brands fa-whatsapp text-xl"></i> К оплате / Отправить в WhatsApp
                     </button>
                 </form>
             </div>
@@ -128,6 +134,16 @@
 
         let cart = JSON.parse(localStorage.getItem('ami_ami_cart')) || [];
 
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
         function renderProducts(cat = 'all') {
             const grid = document.getElementById('productsGrid');
             const filtered = cat === 'all' ? products : products.filter(p => p.category === cat);
@@ -160,15 +176,16 @@
         }
 
         function addToCart(id) {
+            const prod = products.find(p => p.id === id);
             const item = cart.find(i => i.id === id);
             if (item) {
                 item.qty++;
             } else {
-                const prod = products.find(p => p.id === id);
                 cart.push({ ...prod, qty: 1 });
             }
             saveCart();
             updateCartUI();
+            showToast(`Товар добавлен в корзину!`);
         }
 
         function changeQty(id, delta) {
@@ -233,7 +250,7 @@
             setTimeout(() => cartModal.classList.add('hidden'), 300);
         };
 
-        // Send order to WhatsApp
+        // Send order to WhatsApp and clear/process
         document.getElementById('orderForm').onsubmit = (e) => {
             e.preventDefault();
             if (cart.length === 0) return alert('Добавьте товары в корзину');
