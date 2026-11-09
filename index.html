@@ -44,4 +44,235 @@
 
     <!-- Catalog Section -->
     <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
-        <!-- Categories
+        <!-- Categories Filter -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
+            <button onclick="filterCategory('all')" class="cat-btn active bg-rose-900 text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors">Все товары</button>
+            <button onclick="filterCategory('jeans')" class="cat-btn bg-stone-200 text-stone-700 hover:bg-stone-300 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors">Брюки и джинсы</button>
+            <button onclick="filterCategory('medical')" class="cat-btn bg-stone-200 text-stone-700 hover:bg-stone-300 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors">Медформа</button>
+            <button onclick="filterCategory('knitwear')" class="cat-btn bg-stone-200 text-stone-700 hover:bg-stone-300 px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors">Трикотаж</button>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="productsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <!-- Dynamic items -->
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-stone-900 text-white px-5 py-3 rounded-xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMsg" class="text-sm font-medium">Товар добавлен в корзину</span>
+    </div>
+
+    <!-- Cart Modal / Slide-over -->
+    <div id="cartModal" class="fixed inset-0 bg-black/50 z-50 flex justify-end hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md h-full flex flex-col shadow-2xl">
+            <div class="p-4 border-b flex justify-between items-center bg-stone-50">
+                <h2 class="text-lg font-bold text-stone-800">Ваша корзина</h2>
+                <button id="closeCartBtn" class="text-stone-500 hover:text-stone-800 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div id="cartItems" class="flex-grow overflow-y-auto p-4 space-y-4">
+                <!-- Cart list -->
+            </div>
+
+            <div class="p-4 border-t bg-stone-50 space-y-3">
+                <div class="flex justify-between items-center text-lg font-bold">
+                    <span>Итого:</span>
+                    <span id="cartTotal">0 ₸</span>
+                </div>
+                
+                <button onclick="sendToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md text-base">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i> Отправить заказ в WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WHATSAPP_PHONE = "77073066777";
+
+        const products = [
+            {
+                id: 1,
+                name: "Джинсы женские (Клеш, тёмно-синие)",
+                category: "jeans",
+                price: 20000,
+                image: "IMG-20261109-WA0034.jpg",
+                description: "Стильные женские джинсы клеш. Все размеры в наличии."
+            },
+            {
+                id: 2,
+                name: "Джинсы женские (Прямые, классика)",
+                category: "jeans",
+                price: 20000,
+                image: "IMG-20261109-WA0031.jpg",
+                description: "Прямой крой, комфортная посадка. Все размеры в наличии."
+            },
+            {
+                id: 3,
+                name: "Джинсы женские (Тёмный деним)",
+                category: "jeans",
+                price: 20000,
+                image: "IMG-20261109-WA0032.jpg",
+                description: "Глубокий синий цвет, качественный деним. Все размеры в наличии."
+            },
+            {
+                id: 4,
+                name: "Джинсы женские (Прямые, средне-синие)",
+                category: "jeans",
+                price: 20000,
+                image: "IMG-20261109-WA0033.jpg",
+                description: "Универсальные прямые женские джинсы. Все размеры в наличии."
+            },
+            {
+                id: 5,
+                name: "Джинсы женские (С потертостями)",
+                category: "jeans",
+                price: 20000,
+                image: "IMG-20261109-WA0030.jpg",
+                description: "Стильная варка и удобный крой. Все размеры в наличии."
+            }
+        ];
+
+        let cart = JSON.parse(localStorage.getItem('ami_ami_cart')) || [];
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function renderProducts(cat = 'all') {
+            const grid = document.getElementById('productsGrid');
+            const filtered = cat === 'all' ? products : products.filter(p => p.category === cat);
+            
+            grid.innerHTML = filtered.map(p => `
+                <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                    <img src="${p.image}" alt="${p.name}" class="w-full h-56 md:h-72 object-cover">
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="font-semibold text-stone-900 text-sm md:text-base leading-snug">${p.name}</h3>
+                        <p class="text-xs text-stone-500 mt-1 flex-grow">${p.description}</p>
+                        <div class="mt-3 flex items-center justify-between">
+                            <span class="text-base font-bold text-rose-950">${p.price.toLocaleString()} ₸</span>
+                            <button onclick="addToCart(${p.id})" class="bg-rose-900 hover:bg-rose-950 text-white text-xs px-3 py-2 rounded-lg font-medium transition-colors">
+                                В корзину
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-rose-900', 'text-white');
+                btn.classList.add('bg-stone-200', 'text-stone-700');
+            });
+            event.target.classList.remove('bg-stone-200', 'text-stone-700');
+            event.target.classList.add('bg-rose-900', 'text-white');
+            renderProducts(cat);
+        }
+
+        function addToCart(id) {
+            const prod = products.find(p => p.id === id);
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.qty++;
+            } else {
+                cart.push({ ...prod, qty: 1 });
+            }
+            saveCart();
+            updateCartUI();
+            showToast(`Товар добавлен в корзину!`);
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== id);
+            }
+            saveCart();
+            updateCartUI();
+        }
+
+        function saveCart() {
+            localStorage.setItem('ami_ami_cart', JSON.stringify(cart));
+        }
+
+        function updateCartUI() {
+            const badge = document.getElementById('cartBadge');
+            const totalQty = cart.reduce((acc, i) => acc + i.qty, 0);
+            
+            if (totalQty > 0) {
+                badge.innerText = totalQty;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            const itemsContainer = document.getElementById('cartItems');
+            if (cart.length === 0) {
+                itemsContainer.innerHTML = `<p class="text-center text-stone-400 py-8 text-sm">Ваша корзина пуста</p>`;
+            } else {
+                itemsContainer.innerHTML = cart.map(i => `
+                    <div class="flex items-center gap-3 border-b pb-3">
+                        <img src="${i.image}" class="w-14 h-14 object-cover rounded-md">
+                        <div class="flex-grow">
+                            <h4 class="text-xs font-semibold text-stone-800">${i.name}</h4>
+                            <p class="text-xs text-stone-500">${i.price.toLocaleString()} ₸</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <button onclick="changeQty(${i.id}, -1)" class="w-5 h-5 bg-stone-200 rounded text-xs flex items-center justify-center font-bold">-</button>
+                                <span class="text-xs font-bold">${i.qty}</span>
+                                <button onclick="changeQty(${i.id}, 1)" class="w-5 h-5 bg-stone-200 rounded text-xs flex items-center justify-center font-bold">+</button>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold">${(i.price * i.qty).toLocaleString()} ₸</span>
+                    </div>
+                `).join('');
+            }
+
+            const totalSum = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+            document.getElementById('cartTotal').innerText = `${totalSum.toLocaleString()} ₸`;
+        }
+
+        // Cart Modal controls
+        const cartModal = document.getElementById('cartModal');
+        document.getElementById('cartBtn').onclick = () => {
+            cartModal.classList.remove('hidden');
+            setTimeout(() => cartModal.classList.remove('opacity-0'), 10);
+        };
+        document.getElementById('closeCartBtn').onclick = () => {
+            cartModal.classList.add('opacity-0');
+            setTimeout(() => cartModal.classList.add('hidden'), 300);
+        };
+
+        // Send order straight to WhatsApp without extra inputs
+        function sendToWhatsApp() {
+            if (cart.length === 0) {
+                alert('Добавьте товары в корзину');
+                return;
+            }
+
+            let text = `Здравствуйте, AMI AMI! Хочу сделать заказ:\n\n`;
+            cart.forEach((item, index) => {
+                text += `${index + 1}. ${item.name} x ${item.qty} шт. = ${(item.price * item.qty).toLocaleString()} ₸\n`;
+            });
+
+            const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+            text += `\n*Итого:* ${total.toLocaleString()} ₸`;
+
+            window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        renderProducts();
+        updateCartUI();
+    </script>
+</body>
+</html>
