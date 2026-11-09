@@ -73,15 +73,9 @@
                     <span id="cartTotal">0 ₸</span>
                 </div>
                 
-                <form id="orderForm" class="space-y-3">
-                    <input type="text" id="custName" placeholder="Ваше имя" required class="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500">
-                    <input type="text" id="custAddress" placeholder="Адрес доставки или город" required class="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500">
-                    <textarea id="custNote" placeholder="Размер или комментарий к заказу" rows="2" class="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
-                    
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md">
-                        <i class="fa-brands fa-whatsapp text-xl"></i> К оплате / Отправить в WhatsApp
-                    </button>
-                </form>
+                <button onclick="sendToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md text-base">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i> Отправить заказ в WhatsApp
+                </button>
             </div>
         </div>
     </div>
@@ -250,14 +244,12 @@
             setTimeout(() => cartModal.classList.add('hidden'), 300);
         };
 
-        // Send order to WhatsApp and clear/process
-        document.getElementById('orderForm').onsubmit = (e) => {
-            e.preventDefault();
-            if (cart.length === 0) return alert('Добавьте товары в корзину');
-
-            const name = document.getElementById('custName').value;
-            const address = document.getElementById('custAddress').value;
-            const note = document.getElementById('custNote').value;
+        // Send order straight to WhatsApp without extra inputs
+        function sendToWhatsApp() {
+            if (cart.length === 0) {
+                alert('Добавьте товары в корзину');
+                return;
+            }
 
             let text = `Здравствуйте, AMI AMI! Хочу сделать заказ:\n\n`;
             cart.forEach((item, index) => {
@@ -265,13 +257,10 @@
             });
 
             const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-            text += `\n*Итого:* ${total.toLocaleString()} ₸\n`;
-            text += `\n*Имя:* ${name}`;
-            text += `\n*Адрес/Город:* ${address}`;
-            if (note) text += `\n*Размер/Комментарий:* ${note}`;
+            text += `\n*Итого:* ${total.toLocaleString()} ₸`;
 
             window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`, '_blank');
-        };
+        }
 
         renderProducts();
         updateCartUI();
